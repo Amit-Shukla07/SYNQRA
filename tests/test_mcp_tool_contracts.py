@@ -1,8 +1,9 @@
-"""Contract and schema verification for the 31 original curated SYNQRA MCP tools.
+"""Contract verification for 31 original curated tools + 1 additive agent tool (32 total).
 
-Ensures the public FastMCP server interface preserves the exact original tool inventory,
-canonical names, descriptions, input schemas, required parameters, and types without
-exposing internal implementation details or raw Composio action names.
+Ensures the public FastMCP server interface preserves the exact original tool inventory (31 tools),
+plus the additive synqra_run_agent tool (32 tools total), canonical names, descriptions,
+input schemas, required parameters, and types without exposing internal implementation details
+or raw Composio action names.
 """
 
 from __future__ import annotations
@@ -40,7 +41,7 @@ def fully_mounted_mcp_server() -> FastMCP:
     return create_mcp_server(settings=settings, registry=reg)
 
 
-# Exact original 31-tool specification
+# Complete 32-tool specification: 31 original curated tools + 1 additive agent tool
 EXPECTED_INVENTORY: dict[str, dict[str, Any]] = {
     # YouTube (2)
     "search_youtube_videos": {
@@ -291,18 +292,26 @@ EXPECTED_INVENTORY: dict[str, dict[str, Any]] = {
         "required": [],
         "properties": [],
     },
+    # Agent Invocation (Phase 9.6 Component B - 1)
+    "synqra_run_agent": {
+        "service": "agent",
+        "required": ["request"],
+        "properties": ["request", "thread_id"],
+    },
 }
 
 
 @pytest.mark.asyncio
 async def test_mcp_exact_31_tool_inventory(fully_mounted_mcp_server: FastMCP) -> None:
-    """Verify that FastMCP registers exactly the 31 curated tools without additions or renames."""
+    """Verify FastMCP registers exactly 32 tools (31 original + 1 additive agent tool)."""
     tools = await fully_mounted_mcp_server.list_tools()
 
     tool_names = {t.name for t in tools}
     expected_names = set(EXPECTED_INVENTORY.keys())
 
-    assert len(tools) == 31, f"Expected exactly 31 tools, found {len(tools)}: {tool_names}"
+    assert len(tools) == 32, (
+        f"Expected 32 tools (31 original + synqra_run_agent), found {len(tools)}: {tool_names}"
+    )
     assert tool_names == expected_names, (
         f"Tool set mismatch! Missing: {expected_names - tool_names}, "
         f"Extra: {tool_names - expected_names}"
@@ -382,3 +391,4 @@ async def test_service_counts(fully_mounted_mcp_server: FastMCP) -> None:
     assert counts.get("gmail") == 6
     assert counts.get("web_search") == 3
     assert counts.get("system") == 1
+    assert counts.get("agent") == 1

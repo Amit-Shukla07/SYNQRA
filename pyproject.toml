@@ -26,7 +26,8 @@ dependencies = [
 ]
 
 [project.scripts]
-synqra = "synqra.server.app:main"
+synqra = "synqra.cli.main:main"
+synqra-server = "synqra.server.app:main"
 
 [build-system]
 requires = ["uv_build>=0.12.6,<0.13.0"]

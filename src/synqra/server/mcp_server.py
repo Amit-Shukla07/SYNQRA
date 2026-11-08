@@ -4,7 +4,7 @@ Defines the FastMCP application instance, registers core diagnostic tools,
 and manages server metadata.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -96,6 +96,33 @@ def create_mcp_server(
             integrations_status=statuses,
             transport=cfg.transport,
             environment=cfg.environment,
+        )
+
+    @server.tool(
+        name="synqra_run_agent",
+        description=(
+            "Execute a multi-step natural language agent workflow using SYNQRA's "
+            "LangGraph orchestration engine across connected tools (GitHub, Gmail, "
+            "Google Calendar, Google Drive, YouTube, Web Search). Protected WRITE or "
+            "SENSITIVE operations pause safely for Human-in-the-Loop authorization."
+        ),
+    )
+    async def synqra_run_agent(
+        request: str,
+        thread_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Execute an agent workflow from a natural language request.
+
+        Args:
+            request: The natural language task or instructions for the agent.
+            thread_id: Optional thread ID to maintain state across multi-turn interactions.
+        """
+        from synqra.cli.commands import run_agent_request
+
+        return await run_agent_request(
+            request=request,
+            thread_id=thread_id,
+            silent=True,
         )
 
     @server.custom_route("/", methods=["GET"])

@@ -245,6 +245,7 @@ async def run_agent_workflow(
     graph: CompiledStateGraph | None = None,
     llm: BaseChatModel | None = None,
     registry: AgentToolRegistry | None = None,
+    adapter: AgentToolAdapter | None = None,
     checkpointer: BaseCheckpointSaver | None = None,
 ) -> dict[str, Any]:
     """Execute an agent workflow end-to-end starting with a user request.
@@ -255,6 +256,7 @@ async def run_agent_workflow(
         graph: Optional compiled graph instance.
         llm: Optional ChatModel instance.
         registry: Optional AgentToolRegistry.
+        adapter: Optional AgentToolAdapter.
         checkpointer: Optional explicit state persistence checkpointer.
 
     Returns:
@@ -266,7 +268,9 @@ async def run_agent_workflow(
         active_cp = checkpointer
         if active_cp is None and get_settings().checkpointer_type == "postgres":
             active_cp = await get_checkpointer()
-        app = create_agent_graph(llm=llm, registry=registry, checkpointer=active_cp)
+        app = create_agent_graph(
+            llm=llm, registry=registry, adapter=adapter, checkpointer=active_cp
+        )
     tid = thread_id or f"th_{uuid.uuid4().hex[:12]}"
     wid = f"wf_{uuid.uuid4().hex[:12]}"
 
@@ -367,3 +371,7 @@ async def resume_agent_workflow(
             result["approval_requests"] = current_reqs + [appr_req]
 
     return result
+
+
+# Convenience alias for agent execution
+execute_agent_workflow = run_agent_workflow
